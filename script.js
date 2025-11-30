@@ -42,6 +42,20 @@ const Elements = {
     fallbackDataElement: document.getElementById('fallbackData')
 };
 
+// Cache busting - Force refresh
+const CACHE_BUSTER = 'v1.0.2-' + Date.now();
+console.log('🔄 Cache buster:', CACHE_BUSTER);
+
+// Clear any existing caches on load
+if ('caches' in window) {
+    caches.keys().then(function(names) {
+        for (let name of names) {
+            caches.delete(name);
+            console.log('🗑️ Deleted cache:', name);
+        }
+    });
+}
+
 /**
  * Initialize the application
  */
