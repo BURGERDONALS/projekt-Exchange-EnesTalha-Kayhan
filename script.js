@@ -1,12 +1,12 @@
 /**
  * Currency Exchange Rates App
- * Production Version v1.0.4 - Fixed Form Submission Issues
+ * Production Version v1.0.4 - Fixed DOM Issues
  */
 
 // Configuration
 const CONFIG = {
     API_BASE_URL: 'https://api.frankfurter.app',
-    TARGET_CURRENCIES: ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'CNY', 'NZD', 'SEK'],
+    TARGET_CURRENCIES: ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'CNY'],
     REFRESH_INTERVAL: 30000,
     TIMEOUT: 10000,
     VERSION: '1.0.4'
@@ -20,43 +20,52 @@ const AppState = {
     isOnline: true,
     lastSuccessfulUpdate: null,
     autoRefreshInterval: null,
-    isFetching: false // Yeni: Fetch durumunu takip etmek için
+    isFetching: false
 };
 
-// DOM Elements - will be initialized after DOM loads
+// DOM Elements
 let Elements = {};
 
 /**
- * Initialize DOM Elements
+ * Initialize DOM Elements with debug info
  */
 function initDOMElements() {
-    Elements = {
-        currencyForm: document.getElementById('currencyForm'),
-        baseCurrencySelect: document.getElementById('baseCurrency'),
-        fetchButton: document.getElementById('fetchButton'),
-        loadingElement: document.getElementById('loading'),
-        errorElement: document.getElementById('error'),
-        errorMessageElement: document.getElementById('errorMessage'),
-        resultsElement: document.getElementById('results'),
-        resultsTitleElement: document.getElementById('resultsTitle'),
-        lastUpdateElement: document.getElementById('lastUpdate'),
-        autoUpdateElement: document.getElementById('autoUpdate'),
-        ratesTableBody: document.getElementById('ratesTableBody'),
-        pageLoadTimeElement: document.getElementById('pageLoadTime'),
-        appVersionElement: document.getElementById('appVersion'),
-        fallbackDataElement: document.getElementById('fallbackData')
+    console.log('🔍 Initializing DOM elements...');
+    
+    const elementSelectors = {
+        currencyForm: 'currencyForm',
+        baseCurrencySelect: 'baseCurrency',
+        fetchButton: 'fetchButton',
+        loadingElement: 'loading',
+        errorElement: 'error',
+        errorMessageElement: 'errorMessage',
+        resultsElement: 'results',
+        resultsTitleElement: 'resultsTitle',
+        lastUpdateElement: 'lastUpdate',
+        autoUpdateElement: 'autoUpdate',
+        ratesTableBody: 'ratesTableBody',
+        pageLoadTimeElement: 'pageLoadTime',
+        appVersionElement: 'appVersion',
+        fallbackDataElement: 'fallbackData'
     };
+
+    // Initialize all elements
+    Elements = {};
+    for (const [key, id] of Object.entries(elementSelectors)) {
+        Elements[key] = document.getElementById(id);
+        console.log(`🔍 ${key}:`, Elements[key] ? '✅ Found' : '❌ NOT FOUND');
+    }
+
+    // Check for critical elements
+    const criticalElements = ['fetchButton', 'baseCurrencySelect', 'ratesTableBody', 'resultsElement'];
+    const missingCritical = criticalElements.filter(key => !Elements[key]);
     
-    // Check if all required elements are found
-    const missingElements = Object.entries(Elements)
-        .filter(([key, element]) => !element)
-        .map(([key]) => key);
-    
-    if (missingElements.length > 0) {
-        console.error('❌ Missing DOM elements:', missingElements);
+    if (missingCritical.length > 0) {
+        console.error('❌ Missing critical elements:', missingCritical);
         return false;
     }
-    
+
+    console.log('✅ DOM elements initialized successfully');
     return true;
 }
 
@@ -66,52 +75,91 @@ function initDOMElements() {
 function initApp() {
     console.log('🚀 Initializing Currency Exchange App...');
     
-    // Initialize DOM elements
-    if (!initDOMElements()) {
-        console.error('❌ Failed to initialize DOM elements');
-        showError('Application failed to load. Please refresh the page.');
-        return;
-    }
-    
-    // Set version
-    Elements.appVersionElement.textContent = `v${CONFIG.VERSION} • Production`;
-    
-    // Set page load time
-    const now = new Date();
-    Elements.pageLoadTimeElement.textContent = `Page loaded: ${formatDateTime(now)}`;
-    
-    // Set up event listeners - SADECE BUTON CLICK
-    Elements.fetchButton.addEventListener('click', handleFetchButtonClick);
-    Elements.baseCurrencySelect.addEventListener('change', handleCurrencyChange);
-    
-    // FORM submit event'ini kaldır - sadece buton click kullan
-    if (Elements.currencyForm) {
-        Elements.currencyForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Form submit'i engelle
-        });
-    }
-    
-    // Set up online/offline detection
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOnlineStatus);
-    
-    // Check initial online status
-    checkOnlineStatus();
-    
-    // Load initial data
+    // Wait a bit for DOM to be fully ready
     setTimeout(() => {
-        fetchExchangeRates();
-    }, 500);
-    
-    console.log('✅ Currency Exchange Rates App initialized successfully');
+        // Initialize DOM elements
+        if (!initDOMElements()) {
+            console.error('❌ Failed to initialize DOM elements');
+            // Don't show error immediately, try to work with what we have
+            initializeMinimalApp();
+            return;
+        }
+        
+        // Set version
+        if (Elements.appVersionElement) {
+            Elements.appVersionElement.textContent = `v${CONFIG.VERSION} • Production`;
+        }
+        
+        // Set page load time
+        const now = new Date();
+        if (Elements.pageLoadTimeElement) {
+            Elements.pageLoadTimeElement.textContent = `Page loaded: ${formatDateTime(now)}`;
+        }
+        
+        // Set up event listeners
+        if (Elements.fetchButton) {
+            Elements.fetchButton.addEventListener('click', handleFetchButtonClick);
+        }
+        
+        if (Elements.baseCurrencySelect) {
+            Elements.baseCurrencySelect.addEventListener('change', handleCurrencyChange);
+        }
+        
+        // Prevent form submission
+        if (Elements.currencyForm) {
+            Elements.currencyForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+            });
+        }
+        
+        // Set up online/offline detection
+        window.addEventListener('online', handleOnlineStatus);
+        window.addEventListener('offline', handleOnlineStatus);
+        
+        // Check initial online status
+        checkOnlineStatus();
+        
+        // Load initial data
+        setTimeout(() => {
+            fetchExchangeRates();
+        }, 500);
+        
+        console.log('✅ Currency Exchange Rates App initialized successfully');
+    }, 100);
 }
 
 /**
- * Handle fetch button click - ANA FONKSİYON
+ * Minimal app initialization if some elements are missing
+ */
+function initializeMinimalApp() {
+    console.log('🔄 Starting minimal app initialization...');
+    
+    // Try to get essential elements directly
+    Elements.fetchButton = document.getElementById('fetchButton');
+    Elements.baseCurrencySelect = document.getElementById('baseCurrency');
+    Elements.ratesTableBody = document.getElementById('ratesTableBody');
+    
+    if (Elements.fetchButton && Elements.baseCurrencySelect) {
+        console.log('✅ Found minimal required elements');
+        
+        Elements.fetchButton.addEventListener('click', handleFetchButtonClick);
+        Elements.baseCurrencySelect.addEventListener('change', handleCurrencyChange);
+        
+        // Load initial data
+        setTimeout(() => {
+            fetchExchangeRates();
+        }, 500);
+    } else {
+        console.error('❌ Cannot initialize app - missing essential elements');
+        alert('Application failed to load. Please refresh the page.');
+    }
+}
+
+/**
+ * Handle fetch button click
  */
 function handleFetchButtonClick(e) {
     e.preventDefault();
-    e.stopPropagation();
     console.log('🔄 Fetch button clicked');
     fetchExchangeRates();
 }
@@ -149,22 +197,20 @@ function checkOnlineStatus() {
  * Update online status indicator
  */
 function updateOnlineStatusIndicator() {
-    if (!Elements.autoUpdateElement) return;
-    
-    const indicator = AppState.isOnline ? '🟢 Online' : '🔴 Offline';
-    Elements.autoUpdateElement.textContent = `${indicator} • Auto-refresh every 30 seconds`;
+    if (Elements.autoUpdateElement) {
+        const indicator = AppState.isOnline ? '🟢 Online' : '🔴 Offline';
+        Elements.autoUpdateElement.textContent = `${indicator} • Auto-refresh every 30 seconds`;
+    }
 }
 
 /**
  * Start auto-refresh interval
  */
 function startAutoRefresh() {
-    // Clear existing interval
     if (AppState.autoRefreshInterval) {
         clearInterval(AppState.autoRefreshInterval);
     }
     
-    // Set new interval
     AppState.autoRefreshInterval = setInterval(() => {
         if (AppState.isOnline && !AppState.isFetching) {
             console.log('🔄 Auto-refresh fetching rates...');
@@ -179,17 +225,14 @@ function startAutoRefresh() {
  * Fetch exchange rates from API
  */
 async function fetchExchangeRates() {
-    // Eğer zaten fetch işlemi devam ediyorsa, yeni istek başlatma
     if (AppState.isFetching) {
         console.log('⏳ Fetch already in progress, skipping...');
         return;
     }
     
     const baseCurrency = AppState.currentBaseCurrency;
-    
     console.log('📡 Fetching rates for:', baseCurrency);
     
-    // Update UI state
     AppState.isFetching = true;
     showLoading();
     hideError();
@@ -218,20 +261,16 @@ async function fetchExchangeRates() {
             throw new Error('INVALID_RESPONSE');
         }
         
-        console.log('✅ API response received for:', baseCurrency, data.rates);
+        console.log('✅ API response received for:', baseCurrency);
         
-        // Calculate changes
         const changes = calculateRealTimeChanges(data.rates, baseCurrency);
         
-        // Update application state
         AppState.lastSuccessfulUpdate = new Date();
         AppState.isOnline = true;
         AppState.currentRates = data.rates;
         
-        // Display results
         displayResults(data, baseCurrency, changes);
         
-        // Start auto-refresh after successful load
         if (!AppState.autoRefreshInterval) {
             startAutoRefresh();
         }
@@ -268,15 +307,9 @@ function calculateRealTimeChanges(currentRates, baseCurrency) {
                 }
             }
         });
-        
-        console.log('📈 Changes calculated:', changes);
-    } else {
-        console.log('📊 First load, no previous rates for comparison');
     }
     
-    // Update previous rates for next calculation
     AppState.previousRates[baseCurrency] = { ...currentRates };
-    
     return changes;
 }
 
@@ -299,7 +332,6 @@ function handleFetchError(error) {
     
     showError(errorMessage);
     
-    // Show fallback data if we have previous rates
     if (Object.keys(AppState.previousRates).length > 0) {
         showFallbackData();
     }
@@ -309,34 +341,34 @@ function handleFetchError(error) {
  * Display results in the table with real changes
  */
 function displayResults(data, baseCurrency, changes) {
-    // Clear table
+    if (!Elements.ratesTableBody) {
+        console.error('❌ ratesTableBody not found');
+        return;
+    }
+    
     Elements.ratesTableBody.innerHTML = '';
     
-    // Update title
-    Elements.resultsTitleElement.textContent = `Exchange Rates (Base: ${baseCurrency})`;
+    if (Elements.resultsTitleElement) {
+        Elements.resultsTitleElement.textContent = `Exchange Rates (Base: ${baseCurrency})`;
+    }
     
-    // Update last update time
-    const updateTime = new Date();
-    Elements.lastUpdateElement.textContent = `Last update: ${formatDateTime(updateTime)}`;
+    if (Elements.lastUpdateElement) {
+        const updateTime = new Date();
+        Elements.lastUpdateElement.textContent = `Last update: ${formatDateTime(updateTime)}`;
+    }
     
-    // Get current rates
     const currentRates = data.rates;
-    
-    // Filter and sort currencies
     const filteredRates = Object.entries(currentRates)
         .filter(([currency]) => CONFIG.TARGET_CURRENCIES.includes(currency) && currency !== baseCurrency)
         .sort(([a], [b]) => a.localeCompare(b));
     
-    // Populate table with real change data
     filteredRates.forEach(([currency, rate]) => {
         const change = changes[currency] || 0;
         const row = createTableRow(currency, rate, change);
         Elements.ratesTableBody.appendChild(row);
     });
     
-    // Show results
     showResults();
-    
     console.log('✅ Results displayed for:', baseCurrency);
 }
 
@@ -346,7 +378,6 @@ function displayResults(data, baseCurrency, changes) {
 function createTableRow(currency, rate, change) {
     const row = document.createElement('tr');
     
-    // Currency cell
     const currencyCell = document.createElement('td');
     currencyCell.className = 'currency-code';
     currencyCell.innerHTML = `
@@ -359,12 +390,10 @@ function createTableRow(currency, rate, change) {
         </div>
     `;
     
-    // Rate cell
     const rateCell = document.createElement('td');
     rateCell.className = 'exchange-rate';
     rateCell.textContent = rate.toFixed(4);
     
-    // Change cell with enhanced visual indicators
     const changeCell = document.createElement('td');
     const changeInfo = getChangeDisplayInfo(change);
     changeCell.className = changeInfo.className;
@@ -415,9 +444,7 @@ function getCurrencyName(currencyCode) {
         'CHF': 'Swiss Franc',
         'CAD': 'Canadian Dollar',
         'AUD': 'Australian Dollar',
-        'CNY': 'Chinese Yuan',
-        'NZD': 'New Zealand Dollar',
-        'SEK': 'Swedish Krona'
+        'CNY': 'Chinese Yuan'
     };
     
     return currencyNames[currencyCode] || currencyCode;
@@ -429,8 +456,7 @@ function getCurrencyName(currencyCode) {
 function getCurrencyFlag(currencyCode) {
     const flagMap = {
         'USD': '🇺🇸', 'EUR': '🇪🇺', 'GBP': '🇬🇧', 'JPY': '🇯🇵',
-        'CHF': '🇨🇭', 'CAD': '🇨🇦', 'AUD': '🇦🇺', 'CNY': '🇨🇳',
-        'NZD': '🇳🇿', 'SEK': '🇸🇪'
+        'CHF': '🇨🇭', 'CAD': '🇨🇦', 'AUD': '🇦🇺', 'CNY': '🇨🇳'
     };
     
     return flagMap[currencyCode] || '💱';
@@ -453,46 +479,64 @@ function formatDateTime(date) {
 
 // UI Control Functions
 function showLoading() {
-    Elements.loadingElement.classList.remove('hidden');
+    if (Elements.loadingElement) {
+        Elements.loadingElement.classList.remove('hidden');
+    }
 }
 
 function hideLoading() {
-    Elements.loadingElement.classList.add('hidden');
+    if (Elements.loadingElement) {
+        Elements.loadingElement.classList.add('hidden');
+    }
 }
 
 function showError(message) {
-    Elements.errorMessageElement.textContent = message;
-    Elements.errorElement.classList.remove('hidden');
+    if (Elements.errorMessageElement && Elements.errorElement) {
+        Elements.errorMessageElement.textContent = message;
+        Elements.errorElement.classList.remove('hidden');
+    }
 }
 
 function hideError() {
-    Elements.errorElement.classList.add('hidden');
+    if (Elements.errorElement) {
+        Elements.errorElement.classList.add('hidden');
+    }
 }
 
 function showResults() {
-    Elements.resultsElement.classList.remove('hidden');
+    if (Elements.resultsElement) {
+        Elements.resultsElement.classList.remove('hidden');
+    }
 }
 
 function hideResults() {
-    Elements.resultsElement.classList.add('hidden');
+    if (Elements.resultsElement) {
+        Elements.resultsElement.classList.add('hidden');
+    }
 }
 
 function showFallbackData() {
-    Elements.fallbackDataElement.classList.remove('hidden');
+    if (Elements.fallbackDataElement) {
+        Elements.fallbackDataElement.classList.remove('hidden');
+    }
 }
 
 function hideFallbackData() {
-    Elements.fallbackDataElement.classList.add('hidden');
+    if (Elements.fallbackDataElement) {
+        Elements.fallbackDataElement.classList.add('hidden');
+    }
 }
 
 function disableForm(disabled) {
-    Elements.baseCurrencySelect.disabled = disabled;
-    Elements.fetchButton.disabled = disabled;
-    Elements.fetchButton.textContent = disabled ? 'Loading...' : 'Get Exchange Rates';
+    if (Elements.baseCurrencySelect && Elements.fetchButton) {
+        Elements.baseCurrencySelect.disabled = disabled;
+        Elements.fetchButton.disabled = disabled;
+        Elements.fetchButton.textContent = disabled ? 'Loading...' : 'Get Exchange Rates';
+    }
 }
 
 /**
- * Load fallback sample data (for offline mode) with simulated changes
+ * Load fallback sample data
  */
 function loadFallbackData() {
     const baseCurrency = AppState.currentBaseCurrency;
@@ -517,11 +561,7 @@ function loadFallbackData() {
 }
 
 // Initialize app when DOM is fully loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-} else {
-    initApp();
-}
+document.addEventListener('DOMContentLoaded', initApp);
 
 // Export for global access
 window.fetchExchangeRates = fetchExchangeRates;

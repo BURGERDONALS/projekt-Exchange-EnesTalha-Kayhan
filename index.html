@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Currency Exchange Rates App</title>
-    <link rel="stylesheet" href="style.css?v=1.0.2">
+    <link rel="stylesheet" href="style.css?v=1.0.4">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>💱 Currency Exchange Rates</h1>
-            <p>View real-time exchange rates from around the world</p>
+            <p>Real-time exchange rates from European Central Bank data</p>
         </div>
 
         <div class="content">
@@ -21,11 +21,11 @@
                         <option value="USD">USD - US Dollar</option>
                         <option value="EUR" selected>EUR - Euro</option>
                         <option value="GBP">GBP - British Pound</option>
-                        <option value="TRY">TRY - Turkish Lira</option>
                         <option value="JPY">JPY - Japanese Yen</option>
+                        <option value="CHF">CHF - Swiss Franc</option>
                         <option value="CAD">CAD - Canadian Dollar</option>
                         <option value="AUD">AUD - Australian Dollar</option>
-                        <option value="CHF">CHF - Swiss Franc</option>
+                        <option value="CNY">CNY - Chinese Yuan</option>
                     </select>
                 </div>
                 
@@ -34,39 +34,55 @@
                 </button>
             </form>
 
+            <div class="info-box">
+                <h3>ℹ️ Live Market Data</h3>
+                <p>Real-time exchange rates provided by Frankfurter.app • Updated automatically every 30 seconds</p>
+            </div>
+
             <div id="loading" class="loading hidden">
                 <div class="spinner"></div>
-                <p>Loading exchange rates...</p>
+                <p>Loading current exchange rates...</p>
             </div>
 
             <div id="error" class="error hidden">
-                <h3>⚠️ Error</h3>
+                <h3>⚠️ Connection Error</h3>
                 <p id="errorMessage"></p>
                 <button onclick="fetchExchangeRates()" class="retry-btn">Try Again</button>
+                <button onclick="loadFallbackData()" class="retry-btn" style="background: #3498db; margin-left: 10px;">Use Sample Data</button>
             </div>
 
             <div id="results" class="hidden">
                 <h2 id="resultsTitle"></h2>
                 <div class="last-update" id="lastUpdate"></div>
+                <div class="auto-update" id="autoUpdate"></div>
                 <table class="rates-table">
                     <thead>
                         <tr>
                             <th>Currency</th>
                             <th>Exchange Rate</th>
-                            <th>Change</th>
+                            <th>24h Change</th>
                         </tr>
                     </thead>
                     <tbody id="ratesTableBody">
                     </tbody>
                 </table>
             </div>
+
+            <div id="fallbackData" class="hidden">
+                <div class="info-box" style="background: #fff3cd; border-color: #ffeaa7;">
+                    <h3>📡 Offline Mode</h3>
+                    <p>Showing sample data. Real-time updates will resume when connection is restored.</p>
+                </div>
+            </div>
         </div>
 
         <div class="footer">
+            <p>Data provided by <a href="https://www.frankfurter.app/" target="_blank" style="color: #667eea;">Frankfurter.app</a> • European Central Bank reference rates</p>
             <p class="timestamp" id="pageLoadTime"></p>
+            <p class="timestamp" id="appVersion">v1.0.0 • Production</p>
         </div>
     </div>
 
-    <script src="script.js?v=1.0.2"></script>
+    <script src="script.js?v=1.0.4"></script>
 </body>
 </html>
