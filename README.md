@@ -1,10 +1,10 @@
-💱 Currency Exchange Rates App
+# 💱 Currency Exchange Rates App
 A real-time currency exchange rates application that displays current exchange rates from European Central Bank data.
 
-🚀 Live Demo
+# 🚀 Live Demo
 Live Application: https://projekt-exchange-enestalha-kayhan.onrender.com
 
-✨ Features
+# ✨ Features
 Real-time exchange rates from Frankfurter.app API
 
 Support for multiple base currencies (USD, EUR, GBP, JPY, etc.)
@@ -17,7 +17,7 @@ Responsive design for all devices
 
 Offline support with sample data
 
-🛠️ Local Development
+# 🛠️ Local Development
 Quick Start
 Download all project files
 
@@ -26,14 +26,15 @@ Open index.html in your web browser
 That's it! The app will run locally
 
 Files Needed
-text
+```bash
 index.html
 style.css  
 script.js
-🌐 API
+```
+# 🌐 API
 Uses Frankfurter.app - Free exchange rates API with no key required.
 
-📱 Usage
+# 📱 Usage
 Select a base currency from the dropdown
 
 Click "Get Exchange Rates"
