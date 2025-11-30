@@ -1,0 +1,19 @@
+{
+  "name": "currency-exchange-app",
+  "version": "1.0.0",
+  "description": "Real-time currency exchange rates application",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build process needed for static site'",
+    "start": "serve -s . -l 8080"
+  },
+  "keywords": ["currency", "exchange", "rates", "finance", "render"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "serve": "^14.2.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

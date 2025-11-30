@@ -225,3 +225,38 @@ setInterval(() => {
     if (!loadingElement.classList.contains('hidden')) return;
     fetchExchangeRates();
 }, 30000);
+
+// Service Worker Registration for offline support (Render için optimize)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(function(error) {
+                console.log('ServiceWorker registration failed: ', error);
+            });
+    });
+}
+
+// Render-specific performance optimizations
+function initRenderOptimizations() {
+    // Preload critical resources
+    const preloadLink = document.createElement('link');
+    preloadLink.rel = 'preload';
+    preloadLink.href = 'https://api.frankfurter.app/latest?from=EUR';
+    preloadLink.as = 'fetch';
+    preloadLink.crossOrigin = 'anonymous';
+    document.head.appendChild(preloadLink);
+    
+    // Monitor performance
+    if ('connection' in navigator) {
+        console.log('Connection type:', navigator.connection.effectiveType);
+        console.log('Download speed:', navigator.connection.downlink + ' Mbps');
+    }
+}
+
+// Initialize Render optimizations
+document.addEventListener('DOMContentLoaded', function() {
+    initRenderOptimizations();
+});
