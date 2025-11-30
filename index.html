@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Exchange Rates App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💱 Currency Exchange Rates</h1>
+            <p>View real-time exchange rates from around the world</p>
+        </div>
+
+        <div class="content">
+            <form id="currencyForm">
+                <div class="form-group">
+                    <label for="baseCurrency">Base Currency:</label>
+                    <select id="baseCurrency" class="form-select">
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR" selected>EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="TRY">TRY - Turkish Lira</option>
+                        <option value="JPY">JPY - Japanese Yen</option>
+                        <option value="CAD">CAD - Canadian Dollar</option>
+                        <option value="AUD">AUD - Australian Dollar</option>
+                        <option value="CHF">CHF - Swiss Franc</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn" id="fetchButton">
+                    Get Exchange Rates
+                </button>
+            </form>
+
+            <div class="info-box">
+                <h3>ℹ️ API Information</h3>
+                <p>Frankfurter.app - Free exchange rates API with no API key required</p>
+            </div>
+
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Loading exchange rates...</p>
+            </div>
+
+            <div id="error" class="error hidden">
+                <h3>⚠️ Error</h3>
+                <p id="errorMessage"></p>
+                <button onclick="fetchExchangeRates()" class="retry-btn">Try Again</button>
+            </div>
+
+            <div id="results" class="hidden">
+                <h2 id="resultsTitle"></h2>
+                <div class="last-update" id="lastUpdate"></div>
+                <table class="rates-table">
+                    <thead>
+                        <tr>
+                            <th>Currency</th>
+                            <th>Exchange Rate</th>
+                            <th>Change</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ratesTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Data provided by Frankfurter.app API</p>
+            <p class="timestamp" id="pageLoadTime"></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
