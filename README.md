@@ -5,33 +5,39 @@ A real-time currency exchange rates application that displays current exchange r
 Live Application: https://projekt-exchange-enestalha-kayhan.onrender.com
 
 ✨ Features
-Feature	Description
-🔄 Real-time Data	Live exchange rates from Frankfurter.app API
-🌍 Multiple Currencies	USD, EUR, GBP, JPY, CHF, CAD, AUD, CNY
-📊 Change Indicators	24-hour percentage changes with visual indicators
-⚡ Auto-refresh	Updates every 30 seconds automatically
-📱 Responsive Design	Works on desktop, tablet, and mobile
-🔄 Offline Support	Fallback data when offline
+Real-time exchange rates from Frankfurter.app API
+
+Support for multiple base currencies (USD, EUR, GBP, JPY, etc.)
+
+24-hour change indicators
+
+Auto-refresh every 30 seconds
+
+Responsive design for all devices
+
+Offline support with sample data
+
 🛠️ Local Development
 Quick Start
-bash
-# 1. Clone or download the project files
-# 2. Open index.html in your browser
-# 3. That's it! No build process required
-Required Files
-text
-📁 currency-exchange-app/
-├── 📄 index.html
-├── 🎨 style.css  
-└── ⚙️ script.js
-🌐 API Information
-Built with Frankfurter.app - Free exchange rates API with no API key required
+Download all project files
 
-📱 How to Use
+Open index.html in your web browser
+
+That's it! The app will run locally
+
+Files Needed
+text
+index.html
+style.css  
+script.js
+🌐 API
+Uses Frankfurter.app - Free exchange rates API with no key required.
+
+📱 Usage
 Select a base currency from the dropdown
 
-Click "Get Exchange Rates" button
+Click "Get Exchange Rates"
 
 View real-time rates with change percentages
 
-Watch auto-updates every 30 seconds
+App auto-updates every 30 seconds
