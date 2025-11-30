@@ -1,6 +1,6 @@
 /**
  * Currency Exchange Rates App
- * Production Version v1.0.3 - Fixed DOM Loading Issue
+ * Production Version v1.0.4 - Fixed Form Submission Issues
  */
 
 // Configuration
@@ -9,7 +9,7 @@ const CONFIG = {
     TARGET_CURRENCIES: ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'CNY', 'NZD', 'SEK'],
     REFRESH_INTERVAL: 30000,
     TIMEOUT: 10000,
-    VERSION: '1.0.3'
+    VERSION: '1.0.4'
 };
 
 // Application State
@@ -19,7 +19,8 @@ const AppState = {
     currentBaseCurrency: 'EUR',
     isOnline: true,
     lastSuccessfulUpdate: null,
-    autoRefreshInterval: null
+    autoRefreshInterval: null,
+    isFetching: false // Yeni: Fetch durumunu takip etmek için
 };
 
 // DOM Elements - will be initialized after DOM loads
@@ -73,23 +74,21 @@ function initApp() {
     }
     
     // Set version
-    if (Elements.appVersionElement) {
-        Elements.appVersionElement.textContent = `v${CONFIG.VERSION} • Production`;
-    }
+    Elements.appVersionElement.textContent = `v${CONFIG.VERSION} • Production`;
     
     // Set page load time
     const now = new Date();
-    if (Elements.pageLoadTimeElement) {
-        Elements.pageLoadTimeElement.textContent = `Page loaded: ${formatDateTime(now)}`;
-    }
+    Elements.pageLoadTimeElement.textContent = `Page loaded: ${formatDateTime(now)}`;
     
-    // Set up event listeners
+    // Set up event listeners - SADECE BUTON CLICK
+    Elements.fetchButton.addEventListener('click', handleFetchButtonClick);
+    Elements.baseCurrencySelect.addEventListener('change', handleCurrencyChange);
+    
+    // FORM submit event'ini kaldır - sadece buton click kullan
     if (Elements.currencyForm) {
-        Elements.currencyForm.addEventListener('submit', handleFormSubmit);
-    }
-    
-    if (Elements.baseCurrencySelect) {
-        Elements.baseCurrencySelect.addEventListener('change', handleCurrencyChange);
+        Elements.currencyForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Form submit'i engelle
+        });
     }
     
     // Set up online/offline detection
@@ -102,16 +101,18 @@ function initApp() {
     // Load initial data
     setTimeout(() => {
         fetchExchangeRates();
-    }, 1000);
+    }, 500);
     
     console.log('✅ Currency Exchange Rates App initialized successfully');
 }
 
 /**
- * Handle form submission
+ * Handle fetch button click - ANA FONKSİYON
  */
-function handleFormSubmit(e) {
+function handleFetchButtonClick(e) {
     e.preventDefault();
+    e.stopPropagation();
+    console.log('🔄 Fetch button clicked');
     fetchExchangeRates();
 }
 
@@ -119,7 +120,10 @@ function handleFormSubmit(e) {
  * Handle currency change
  */
 function handleCurrencyChange() {
-    AppState.currentBaseCurrency = Elements.baseCurrencySelect.value;
+    const newBaseCurrency = Elements.baseCurrencySelect.value;
+    console.log('🔄 Currency changed to:', newBaseCurrency);
+    
+    AppState.currentBaseCurrency = newBaseCurrency;
     fetchExchangeRates();
 }
 
@@ -128,7 +132,7 @@ function handleCurrencyChange() {
  */
 function handleOnlineStatus() {
     checkOnlineStatus();
-    if (AppState.isOnline) {
+    if (AppState.isOnline && !AppState.isFetching) {
         fetchExchangeRates();
     }
 }
@@ -162,7 +166,8 @@ function startAutoRefresh() {
     
     // Set new interval
     AppState.autoRefreshInterval = setInterval(() => {
-        if (AppState.isOnline && Elements.loadingElement && !Elements.loadingElement.classList.contains('hidden')) {
+        if (AppState.isOnline && !AppState.isFetching) {
+            console.log('🔄 Auto-refresh fetching rates...');
             fetchExchangeRates();
         }
     }, CONFIG.REFRESH_INTERVAL);
@@ -174,11 +179,18 @@ function startAutoRefresh() {
  * Fetch exchange rates from API
  */
 async function fetchExchangeRates() {
+    // Eğer zaten fetch işlemi devam ediyorsa, yeni istek başlatma
+    if (AppState.isFetching) {
+        console.log('⏳ Fetch already in progress, skipping...');
+        return;
+    }
+    
     const baseCurrency = AppState.currentBaseCurrency;
     
     console.log('📡 Fetching rates for:', baseCurrency);
     
     // Update UI state
+    AppState.isFetching = true;
     showLoading();
     hideError();
     hideResults();
@@ -206,6 +218,8 @@ async function fetchExchangeRates() {
             throw new Error('INVALID_RESPONSE');
         }
         
+        console.log('✅ API response received for:', baseCurrency, data.rates);
+        
         // Calculate changes
         const changes = calculateRealTimeChanges(data.rates, baseCurrency);
         
@@ -223,9 +237,10 @@ async function fetchExchangeRates() {
         }
         
     } catch (error) {
-        console.error('API fetch error:', error);
+        console.error('❌ API fetch error:', error);
         handleFetchError(error);
     } finally {
+        AppState.isFetching = false;
         hideLoading();
         disableForm(false);
         updateOnlineStatusIndicator();
@@ -253,6 +268,10 @@ function calculateRealTimeChanges(currentRates, baseCurrency) {
                 }
             }
         });
+        
+        console.log('📈 Changes calculated:', changes);
+    } else {
+        console.log('📊 First load, no previous rates for comparison');
     }
     
     // Update previous rates for next calculation
@@ -290,11 +309,6 @@ function handleFetchError(error) {
  * Display results in the table with real changes
  */
 function displayResults(data, baseCurrency, changes) {
-    if (!Elements.ratesTableBody || !Elements.resultsTitleElement || !Elements.lastUpdateElement) {
-        console.error('❌ Required DOM elements missing for displaying results');
-        return;
-    }
-    
     // Clear table
     Elements.ratesTableBody.innerHTML = '';
     
@@ -323,7 +337,7 @@ function displayResults(data, baseCurrency, changes) {
     // Show results
     showResults();
     
-    console.log('📈 Displayed rates with changes:', changes);
+    console.log('✅ Results displayed for:', baseCurrency);
 }
 
 /**
@@ -439,60 +453,42 @@ function formatDateTime(date) {
 
 // UI Control Functions
 function showLoading() {
-    if (Elements.loadingElement) {
-        Elements.loadingElement.classList.remove('hidden');
-    }
+    Elements.loadingElement.classList.remove('hidden');
 }
 
 function hideLoading() {
-    if (Elements.loadingElement) {
-        Elements.loadingElement.classList.add('hidden');
-    }
+    Elements.loadingElement.classList.add('hidden');
 }
 
 function showError(message) {
-    if (Elements.errorMessageElement && Elements.errorElement) {
-        Elements.errorMessageElement.textContent = message;
-        Elements.errorElement.classList.remove('hidden');
-    }
+    Elements.errorMessageElement.textContent = message;
+    Elements.errorElement.classList.remove('hidden');
 }
 
 function hideError() {
-    if (Elements.errorElement) {
-        Elements.errorElement.classList.add('hidden');
-    }
+    Elements.errorElement.classList.add('hidden');
 }
 
 function showResults() {
-    if (Elements.resultsElement) {
-        Elements.resultsElement.classList.remove('hidden');
-    }
+    Elements.resultsElement.classList.remove('hidden');
 }
 
 function hideResults() {
-    if (Elements.resultsElement) {
-        Elements.resultsElement.classList.add('hidden');
-    }
+    Elements.resultsElement.classList.add('hidden');
 }
 
 function showFallbackData() {
-    if (Elements.fallbackDataElement) {
-        Elements.fallbackDataElement.classList.remove('hidden');
-    }
+    Elements.fallbackDataElement.classList.remove('hidden');
 }
 
 function hideFallbackData() {
-    if (Elements.fallbackDataElement) {
-        Elements.fallbackDataElement.classList.add('hidden');
-    }
+    Elements.fallbackDataElement.classList.add('hidden');
 }
 
 function disableForm(disabled) {
-    if (Elements.baseCurrencySelect && Elements.fetchButton) {
-        Elements.baseCurrencySelect.disabled = disabled;
-        Elements.fetchButton.disabled = disabled;
-        Elements.fetchButton.textContent = disabled ? 'Loading...' : 'Get Exchange Rates';
-    }
+    Elements.baseCurrencySelect.disabled = disabled;
+    Elements.fetchButton.disabled = disabled;
+    Elements.fetchButton.textContent = disabled ? 'Loading...' : 'Get Exchange Rates';
 }
 
 /**
